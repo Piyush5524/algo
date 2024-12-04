@@ -1,0 +1,625 @@
+1) Write a program to sort the elements of an array using Randomized Quick Sort (the
+program should report the number of comparisons). 
+
+
+#include <iostream>
+#include <cstdlib>
+#include <ctime>
+using namespace std;
+
+int comparisons = 0;
+
+int partition(int arr[], int low, int high) {
+    int pivot = arr[high];
+    int i = low - 1;
+    for (int j = low; j < high; j++) {
+        comparisons++;
+        if (arr[j] < pivot) {
+            i++;
+            swap(arr[i], arr[j]);
+        }
+    }
+    swap(arr[i + 1], arr[high]);
+    return i + 1;
+}  
+
+int randomizedPartition(int arr[], int low, int high) {
+    int randomIndex = low + rand() % (high - low + 1);
+    swap(arr[randomIndex], arr[high]);
+    return partition(arr, low, high);
+}
+
+void randomizedQuickSort(int arr[], int low, int high) {
+    if (low < high) {
+        int pi = randomizedPartition(arr, low, high);
+        randomizedQuickSort(arr, low, pi - 1);
+        randomizedQuickSort(arr, pi + 1, high);
+    }
+}
+
+int main() {
+    srand(time(0));
+    int n;
+    cout << "Enter the number of elements: ";
+    cin >> n;
+    int arr[n];
+    cout << "Enter the elements: ";
+    for (int i = 0; i < n; i++) cin >> arr[i];
+    randomizedQuickSort(arr, 0, n - 1);
+    cout << "Sorted array: ";
+    for (int i = 0; i < n; i++) cout << arr[i] << " ";
+    cout << "\nNumber of comparisons: " << comparisons << endl;
+    return 0;
+}
+
+
+
+
+2)   Write a program to find the ith smallest element of an array using Randomized Select.
+
+
+
+#include <iostream>
+#include <cstdlib>
+#include <ctime>
+using namespace std;
+
+int randomizedPartition(int arr[], int low, int high) {
+    int randomIndex = low + rand() % (high - low + 1);
+    swap(arr[randomIndex], arr[high]);
+    int pivot = arr[high];
+    int i = low - 1;
+    for (int j = low; j < high; j++) {
+        if (arr[j] <= pivot) {
+            i++;
+            swap(arr[i], arr[j]);
+        }
+    }
+    swap(arr[i + 1], arr[high]);
+    return i + 1;
+}
+
+int randomizedSelect(int arr[], int low, int high, int i) {
+    if (low == high) return arr[low];
+    int q = randomizedPartition(arr, low, high);
+    int k = q - low + 1;
+    if (i == k) return arr[q];
+    else if (i < k) return randomizedSelect(arr, low, q - 1, i);
+    else return randomizedSelect(arr, q + 1, high, i - k);
+}
+
+int main() {
+    srand(time(0));
+    int n, i;
+    cout << "Enter the number of elements: ";
+    cin >> n;
+    int arr[n];
+    cout << "Enter the elements: ";
+    for (int j = 0; j < n; j++) cin >> arr[j];
+    cout << "Enter the value of i (1-based index): ";
+    cin >> i;
+    if (i < 1 || i > n) {
+        cout << "Invalid input for i. Must be between 1 and " << n << "." << endl;
+        return 1;
+    }
+    int ithSmallest = randomizedSelect(arr, 0, n - 1, i);
+    cout << "The " << i << "-th smallest element is: " << ithSmallest << endl;
+    return 0;
+}
+
+
+
+
+3)   Write a program to determine the minimum spanning tree of a graph using Kruskal’s
+algorithm. 
+
+
+
+#include <iostream>
+#include <vector>
+#include <algorithm>
+using namespace std;
+
+struct Edge {
+    int src, dest, weight;
+};
+
+bool compareEdges(const Edge &a, const Edge &b) {
+    return a.weight < b.weight;
+}
+
+class DisjointSet {
+    vector<int> parent, rank;
+
+public:
+    DisjointSet(int n) {
+        parent.resize(n);
+        rank.resize(n, 0);
+        for (int i = 0; i < n; i++) parent[i] = i;
+    }
+
+    int find(int u) {
+        if (u != parent[u])
+            parent[u] = find(parent[u]);
+        return parent[u];
+    }
+
+    void unite(int u, int v) {
+        int rootU = find(u);
+        int rootV = find(v);
+        if (rootU != rootV) {
+            if (rank[rootU] < rank[rootV])
+                parent[rootU] = rootV;
+            else if (rank[rootU] > rank[rootV])
+                parent[rootV] = rootU;
+            else {
+                parent[rootV] = rootU;
+                rank[rootU]++;
+            }
+        }
+    }
+};
+
+void kruskalMST(vector<Edge> &edges, int V) {
+    sort(edges.begin(), edges.end(), compareEdges);
+    DisjointSet ds(V);
+    vector<Edge> mst;
+    int mstWeight = 0;
+
+    for (const Edge &edge : edges) {
+        if (ds.find(edge.src) != ds.find(edge.dest)) {
+            mst.push_back(edge);
+            mstWeight += edge.weight;
+            ds.unite(edge.src, edge.dest);
+        }
+    }
+
+    cout << "Minimum Spanning Tree:" << endl;
+    for (const Edge &edge : mst)
+        cout << edge.src << " -- " << edge.dest << " == " << edge.weight << endl;
+
+    cout << "Total Weight of MST: " << mstWeight << endl;
+}
+
+int main() {
+    int V, E;
+    cout << "Enter the number of vertices: ";
+    cin >> V;
+    cout << "Enter the number of edges: ";
+    cin >> E;
+
+    vector<Edge> edges(E);
+    cout << "Enter the edges (src dest weight):" << endl;
+    for (int i = 0; i < E; i++)
+        cin >> edges[i].src >> edges[i].dest >> edges[i].weight;
+
+    kruskalMST(edges, V);
+
+    return 0;
+}
+
+
+
+4)    Write a program to implement the Bellman-Ford algorithm to find the shortest paths
+from a given source node to all other nodes in a graph. 
+
+
+
+
+#include <iostream>
+#include <vector>
+#include <climits>
+using namespace std;
+
+struct Edge {
+    int src, dest, weight;
+};
+
+void bellmanFord(int V, int E, vector<Edge> &edges, int source) {
+    vector<int> distance(V, INT_MAX);
+    distance[source] = 0;
+
+    for (int i = 1; i < V; i++) {
+        for (const Edge &edge : edges) {
+            if (distance[edge.src] != INT_MAX && distance[edge.src] + edge.weight < distance[edge.dest]) {
+                distance[edge.dest] = distance[edge.src] + edge.weight;
+            }
+        }
+    }
+
+    for (const Edge &edge : edges) {
+        if (distance[edge.src] != INT_MAX && distance[edge.src] + edge.weight < distance[edge.dest]) {
+            cout << "Graph contains a negative weight cycle." << endl;
+            return;
+        }
+    }
+
+    cout << "Shortest distances from source " << source << ":\n";
+    for (int i = 0; i < V; i++) {
+        if (distance[i] == INT_MAX)
+            cout << i << ": INF" << endl;
+        else
+            cout << i << ": " << distance[i] << endl;
+    }
+}
+
+int main() {
+    int V, E, source;
+    cout << "Enter the number of vertices: ";
+    cin >> V;
+    cout << "Enter the number of edges: ";
+    cin >> E;
+
+    vector<Edge> edges(E);
+    cout << "Enter the edges (src dest weight):\n";
+    for (int i = 0; i < E; i++) {
+        cin >> edges[i].src >> edges[i].dest >> edges[i].weight;
+    }
+
+    cout << "Enter the source vertex: ";
+    cin >> source;
+
+    bellmanFord(V, E, edges, source);
+
+    return 0;
+}
+
+
+
+
+5)   Write a program to implement a B-Tree. 
+
+
+
+#include <iostream>
+#include <vector>
+using namespace std;
+
+class BTreeNode {
+public:
+    vector<int> keys;
+    vector<BTreeNode*> children;
+    bool leaf;
+
+    BTreeNode(vector<int> keys, vector<BTreeNode*> children, bool leaf)
+        : keys(keys), children(children), leaf(leaf) {}
+
+    void traverse() {
+        for (size_t i = 0; i < keys.size(); i++) {
+            if (!leaf) children[i]->traverse();
+            cout << keys[i] << " ";
+        }
+        if (!leaf) children.back()->traverse();
+    }
+};
+
+class BTree {
+    BTreeNode* root;
+
+public:
+    BTree(BTreeNode* root) : root(root) {}
+
+    void traverse() {
+        if (root) {
+            cout << "B-Tree traversal: ";
+            root->traverse();
+            cout << endl;
+        } else {
+            cout << "The B-Tree is empty.\n";
+        }
+    }
+};
+
+int main() {
+    // Sample B-Tree
+    BTreeNode* child1 = new BTreeNode({1, 3}, {}, true);
+    BTreeNode* child2 = new BTreeNode({7, 9}, {}, true);
+    BTreeNode* root = new BTreeNode({5}, {child1, child2}, false);
+
+    BTree tree(root);
+
+    // Traversing the B-Tree
+    tree.traverse();
+
+    return 0;
+}
+
+
+
+6)   Write a program to implement the Tree Data structure, which supports the following
+operations:
+a. Insert
+b. Search
+
+
+
+
+
+#include <iostream>
+using namespace std;
+
+class TreeNode {
+public:
+    int value;
+    TreeNode* left;
+    TreeNode* right;
+
+    TreeNode(int val) : value(val), left(nullptr), right(nullptr) {}
+};
+
+class BinaryTree {
+private:
+    TreeNode* root;
+
+    // Helper function for insertion
+    TreeNode* insert(TreeNode* node, int value) {
+        if (node == nullptr) {
+            return new TreeNode(value);  // Create a new node
+        }
+
+        if (value < node->value) {
+            node->left = insert(node->left, value);  // Insert into the left subtree
+        } else {
+            node->right = insert(node->right, value);  // Insert into the right subtree
+        }
+
+        return node;
+    }
+
+    // Helper function for searching
+    bool search(TreeNode* node, int value) {
+        if (node == nullptr) {
+            return false;  // Not found
+        }
+
+        if (node->value == value) {
+            return true;  // Found
+        }
+
+        if (value < node->value) {
+            return search(node->left, value);  // Search in the left subtree
+        } else {
+            return search(node->right, value);  // Search in the right subtree
+        }
+    }
+
+public:
+    BinaryTree() : root(nullptr) {}
+
+    // Public function for insertion
+    void insert(int value) {
+        root = insert(root, value);
+    }
+
+    // Public function for searching
+    bool search(int value) {
+        return search(root, value);
+    }
+
+    // Function to display the tree (optional)
+    void display(TreeNode* node) {
+        if (node == nullptr) return;
+        display(node->left);
+        cout << node->value << " ";
+        display(node->right);
+    }
+
+    void display() {
+        display(root);
+        cout << endl;
+    }
+};
+
+int main() {
+    BinaryTree tree;
+
+    // Predefined values to insert into the tree
+    int values[] = {50, 30, 20, 40, 70, 60, 80};
+
+    // Insert predefined values into the tree
+    for (int i = 0; i < 7; i++) {
+        tree.insert(values[i]);
+    }
+
+    // Display the tree (In-Order Traversal)
+    cout << "In-Order Traversal: ";
+    tree.display();
+
+    // Ask for user input to search for a value
+    int searchValue;
+    cout << "Enter a value to search in the tree: ";
+    cin >> searchValue;
+
+    if (tree.search(searchValue)) {
+        cout << searchValue << " found in the tree.\n";
+    } else {
+        cout << searchValue << " not found in the tree.\n";
+    }
+
+    return 0;
+}
+
+
+
+
+
+
+7)   Write a program to search a pattern in a given text using the KMP algorithm. 
+
+
+
+
+#include <iostream>
+#include <vector>
+#include <string>
+using namespace std;
+
+// Function to compute the longest proper prefix which is also suffix (LPS) array
+vector<int> computeLPSArray(const string& pattern) {
+    int m = pattern.length();
+    vector<int> lps(m, 0);
+    int length = 0;  // length of the previous longest prefix suffix
+
+    int i = 1;
+    while (i < m) {
+        if (pattern[i] == pattern[length]) {
+            length++;
+            lps[i] = length;
+            i++;
+        } else {
+            if (length != 0) {
+                length = lps[length - 1];
+            } else {
+                lps[i] = 0;
+                i++;
+            }
+        }
+    }
+
+    return lps;
+}
+
+// Function to perform KMP search
+void KMPSearch(const string& text, const string& pattern) {
+    int n = text.length();
+    int m = pattern.length();
+
+    // Preprocess the pattern to get the LPS array
+    vector<int> lps = computeLPSArray(pattern);
+
+    int i = 0;  // index for text
+    int j = 0;  // index for pattern
+    while (i < n) {
+        if (pattern[j] == text[i]) {
+            i++;
+            j++;
+        }
+
+        if (j == m) {
+            cout << "Pattern found at index " << i - j << endl;
+            j = lps[j - 1];
+        } else if (i < n && pattern[j] != text[i]) {
+            if (j != 0) {
+                j = lps[j - 1];
+            } else {
+                i++;
+            }
+        }
+    }
+}
+
+int main() {
+    string text, pattern;
+
+    // Take user input for text and pattern
+    cout << "Enter the text: ";
+    getline(cin, text);
+
+    cout << "Enter the pattern to search: ";
+    getline(cin, pattern);
+
+    KMPSearch(text, pattern);
+
+    return 0;
+}
+
+
+
+
+8)  Write a program to implement a Suffix tree.
+
+
+
+
+
+#include <iostream>
+#include <vector>
+#include <unordered_map>
+#include <string>
+using namespace std;
+
+// Node structure for the Suffix Tree
+class SuffixTreeNode {
+public:
+    unordered_map<char, SuffixTreeNode*> children;
+    int start, *end;
+    int suffixIndex;
+
+    // Constructor for the node
+    SuffixTreeNode(int start, int *end) {
+        this->start = start;
+        this->end = end;
+        this->suffixIndex = -1;
+    }
+};
+
+// Suffix Tree class
+class SuffixTree {
+private:
+    string text;
+    SuffixTreeNode *root;
+
+    // Function to insert suffix into the suffix tree
+    void insertSuffix(int index) {
+        SuffixTreeNode* currentNode = root;
+        int i = index;
+        while (i < text.length()) {
+            if (currentNode->children.find(text[i]) == currentNode->children.end()) {
+                // If the current character is not in children, create a new leaf
+                currentNode->children[text[i]] = new SuffixTreeNode(i, new int(text.length()));
+                return;
+            }
+            currentNode = currentNode->children[text[i]];
+            i++;
+        }
+        currentNode->suffixIndex = index;
+    }
+
+    // Function to print all the suffixes stored in the tree
+    void printSuffixes(SuffixTreeNode* node, string& currentSuffix) {
+        if (node == nullptr) return;
+        if (node->suffixIndex != -1) {
+            // Print the suffix starting at this node
+            cout << "Suffix starting at index " << node->suffixIndex << ": " << text.substr(node->suffixIndex) << endl;
+        }
+        for (auto& child : node->children) {
+            currentSuffix.push_back(child.first);
+            printSuffixes(child.second, currentSuffix);
+            currentSuffix.pop_back();
+        }
+    }
+
+public:
+    // Constructor to initialize the tree with a string
+    SuffixTree(const string& text) {
+        this->text = text;
+        root = new SuffixTreeNode(-1, new int(-1));  // Root node is created
+
+        // Insert all suffixes into the suffix tree
+        for (int i = 0; i < text.length(); i++) {
+            insertSuffix(i);
+        }
+    }
+
+    // Function to print the suffixes of the text
+    void printSuffixes() {
+        string currentSuffix;
+        printSuffixes(root, currentSuffix);
+    }
+};
+
+int main() {
+    string text;
+
+    // Take the text input from the user
+    cout << "Enter the text: ";
+    cin >> text;
+
+    // Create a Suffix Tree for the input text
+    SuffixTree tree(text);
+
+    // Print all suffixes stored in the tree
+    tree.printSuffixes();
+
+    return 0;
+}
